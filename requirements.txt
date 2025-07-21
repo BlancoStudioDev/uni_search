@@ -1,0 +1,11 @@
+Flask==2.3.3
+groq==0.4.1
+fuzzywuzzy==0.18.0
+python-levenshtein==0.21.1
+pandas
+aiohttp
+beautifulsoup4
+requests
+markdownify
+
+
