@@ -1,0 +1,592 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SearchBot - Ricerca Intelligente</title>
+    <style>
+        :root {
+            --background: hsl(0 0% 100%);
+            --foreground: hsl(222.2 84% 4.9%);
+            --card: hsl(0 0% 100%);
+            --card-foreground: hsl(222.2 84% 4.9%);
+            --popover: hsl(0 0% 100%);
+            --popover-foreground: hsl(222.2 84% 4.9%);
+            --primary: hsl(222.2 47.4% 11.2%);
+            --primary-foreground: hsl(210 40% 98%);
+            --secondary: hsl(210 40% 96%);
+            --secondary-foreground: hsl(222.2 47.4% 11.2%);
+            --muted: hsl(210 40% 96%);
+            --muted-foreground: hsl(215.4 16.3% 46.9%);
+            --accent: hsl(210 40% 96%);
+            --accent-foreground: hsl(222.2 47.4% 11.2%);
+            --destructive: hsl(0 84.2% 60.2%);
+            --destructive-foreground: hsl(210 40% 98%);
+            --border: hsl(214.3 31.8% 91.4%);
+            --input: hsl(214.3 31.8% 91.4%);
+            --ring: hsl(222.2 84% 4.9%);
+            --radius: 0.5rem;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background-color: var(--background);
+            color: var(--foreground);
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            color: var(--primary);
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            color: var(--muted-foreground);
+        }
+
+        .search-section {
+            margin-bottom: 2rem;
+        }
+
+        .search-form {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .search-input {
+            flex: 1;
+            padding: 0.75rem 1rem;
+            border: 2px solid var(--border);
+            border-radius: var(--radius);
+            font-size: 1rem;
+            background: var(--background);
+            color: var(--foreground);
+            transition: border-color 0.2s ease;
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: var(--ring);
+            box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.1);
+        }
+
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: var(--radius);
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: var(--primary-foreground);
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            background: hsl(222.2 47.4% 8%);
+        }
+
+        .btn-secondary {
+            background: var(--secondary);
+            color: var(--secondary-foreground);
+            border: 1px solid var(--border);
+        }
+
+        .btn-secondary:hover:not(:disabled) {
+            background: var(--accent);
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .loading {
+            display: none;
+            align-items: center;
+            gap: 0.5rem;
+            color: var(--muted-foreground);
+            margin-top: 1rem;
+        }
+
+        .loading.active {
+            display: flex;
+        }
+
+        .spinner {
+            width: 1rem;
+            height: 1rem;
+            border: 2px solid var(--border);
+            border-top: 2px solid var(--primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .results-section {
+            margin-top: 2rem;
+        }
+
+        .results-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .results-count {
+            color: var(--muted-foreground);
+            font-size: 0.9rem;
+        }
+
+        .download-buttons {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        .ai-response {
+            background: var(--muted);
+            border-left: 4px solid var(--primary);
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            border-radius: var(--radius);
+        }
+
+        .ai-response h3 {
+            color: var(--primary);
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .ai-response .content {
+            white-space: pre-wrap;
+            line-height: 1.6;
+        }
+
+        .search-result {
+            border-left: 3px solid var(--accent);
+        }
+
+        .search-result h4 {
+            color: var(--primary);
+            margin-bottom: 0.5rem;
+        }
+
+        .search-result .url {
+            color: var(--muted-foreground);
+            font-size: 0.9rem;
+            margin-bottom: 0.5rem;
+            word-break: break-all;
+        }
+
+        .search-result .description {
+            margin-bottom: 1rem;
+            color: var(--foreground);
+        }
+
+        .search-result .meta {
+            display: flex;
+            gap: 1rem;
+            font-size: 0.9rem;
+            color: var(--muted-foreground);
+        }
+
+        .tag {
+            background: var(--secondary);
+            color: var(--secondary-foreground);
+            padding: 0.2rem 0.5rem;
+            border-radius: calc(var(--radius) - 2px);
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+
+        .tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-top: 0.5rem;
+        }
+
+        .stats-section {
+            margin-top: 3rem;
+            padding-top: 2rem;
+            border-top: 1px solid var(--border);
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .stat-card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            padding: 1rem;
+            border-radius: var(--radius);
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--primary);
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            color: var(--muted-foreground);
+        }
+
+        .error {
+            background: var(--destructive);
+            color: var(--destructive-foreground);
+            padding: 1rem;
+            border-radius: var(--radius);
+            margin-bottom: 1rem;
+        }
+
+        .example-queries {
+            margin-top: 1rem;
+        }
+
+        .example-queries h3 {
+            color: var(--primary);
+            margin-bottom: 0.5rem;
+            font-size: 1rem;
+        }
+
+        .query-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+
+        .query-btn {
+            background: var(--secondary);
+            color: var(--secondary-foreground);
+            border: 1px solid var(--border);
+            padding: 0.5rem 1rem;
+            border-radius: var(--radius);
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.2s ease;
+        }
+
+        .query-btn:hover {
+            background: var(--accent);
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 1rem;
+            }
+
+            .header h1 {
+                font-size: 2rem;
+            }
+
+            .search-form {
+                flex-direction: column;
+            }
+
+            .results-header {
+                flex-direction: column;
+                gap: 1rem;
+                align-items: flex-start;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔍 SearchBot</h1>
+            <p>Ricerca intelligente nei contenuti indicizzati</p>
+        </div>
+
+        <div class="search-section">
+            <div class="search-form">
+                <input type="text" id="searchInput" class="search-input" placeholder="Inserisci la tua domanda...">
+                <button type="button" id="searchBtn" class="btn btn-primary">
+                    <span>🔍</span>
+                    Cerca
+                </button>
+            </div>
+
+            <div class="loading" id="loading">
+                <div class="spinner"></div>
+                <span>Ricerca in corso...</span>
+            </div>
+
+            <div class="example-queries">
+                <h3>Esempi di domande:</h3>
+                <div class="query-buttons">
+                    <button class="query-btn" onclick="fillQuery('Come posso iscrivermi all università?')">Iscrizione università</button>
+                    <button class="query-btn" onclick="fillQuery('Quali sono i corsi di laurea disponibili?')">Corsi di laurea</button>
+                    <button class="query-btn" onclick="fillQuery('Informazioni sulle borse di studio')">Borse di studio</button>
+                    <button class="query-btn" onclick="fillQuery('Servizi per studenti')">Servizi studenti</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="results-section" id="resultsSection" style="display: none;">
+            <div class="results-header">
+                <div class="results-count" id="resultsCount"></div>
+                <div class="download-buttons">
+                    <button class="btn btn-secondary" onclick="downloadResults('txt')">
+                        <span>📄</span>
+                        Scarica TXT
+                    </button>
+                </div>
+            </div>
+
+            <div id="resultsContent"></div>
+        </div>
+
+        <div class="stats-section">
+            <h2>Statistiche Database</h2>
+            <div class="stats-grid" id="statsGrid">
+                <div class="stat-card">
+                    <div class="stat-value" id="totalPages">-</div>
+                    <div class="stat-label">Pagine totali</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="contentTypes">-</div>
+                    <div class="stat-label">Tipi di contenuto</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="languages">-</div>
+                    <div class="stat-label">Lingue</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="keywords">-</div>
+                    <div class="stat-label">Keywords uniche</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Global variables
+        let currentResults = null;
+
+        // DOM elements
+        const searchInput = document.getElementById('searchInput');
+        const searchBtn = document.getElementById('searchBtn');
+        const loading = document.getElementById('loading');
+        const resultsSection = document.getElementById('resultsSection');
+        const resultsCount = document.getElementById('resultsCount');
+        const resultsContent = document.getElementById('resultsContent');
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            loadStats();
+            
+            // Search on Enter key
+            searchInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    performSearch();
+                }
+            });
+
+            // Search button click
+            searchBtn.addEventListener('click', performSearch);
+        });
+
+        // Fill query from example
+        function fillQuery(query) {
+            searchInput.value = query;
+            searchInput.focus();
+        }
+
+        // Perform search
+        async function performSearch() {
+            const query = searchInput.value.trim();
+            
+            if (!query) {
+                showError('Inserisci una domanda per iniziare la ricerca');
+                return;
+            }
+
+            // Show loading
+            loading.classList.add('active');
+            searchBtn.disabled = true;
+            resultsSection.style.display = 'none';
+
+            try {
+                const response = await fetch('/search', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ query: query })
+                });
+
+                if (!response.ok) {
+                    throw new Error('Errore nella ricerca');
+                }
+
+                const data = await response.json();
+                currentResults = data;
+                displayResults(data);
+
+            } catch (error) {
+                showError('Errore durante la ricerca: ' + error.message);
+            } finally {
+                loading.classList.remove('active');
+                searchBtn.disabled = false;
+            }
+        }
+
+        // Display search results
+        function displayResults(data) {
+            resultsCount.textContent = `${data.results_count} risultati trovati per "${data.query}"`;
+            
+            let html = '';
+
+            // AI Response
+            if (data.ai_response) {
+                html += `
+                    <div class="card ai-response">
+                        <h3>🤖 Risposta AI</h3>
+                        <div class="content">${data.ai_response}</div>
+                    </div>
+                `;
+            }
+
+            // Search Results
+            if (data.search_results && data.search_results.length > 0) {
+                html += '<h3>Risultati dettagliati:</h3>';
+                
+                data.search_results.slice(0, 10).forEach((result, index) => {
+                    const keywords = result.keywords ? result.keywords.slice(0, 5) : [];
+                    const topics = result.main_topics ? result.main_topics.slice(0, 3) : [];
+                    
+                    html += `
+                        <div class="card search-result">
+                            <h4>${result.title || 'Titolo non disponibile'}</h4>
+                            <div class="url">${result.url}</div>
+                            <div class="description">${result.description || 'Descrizione non disponibile'}</div>
+                            <div class="meta">
+                                <span>Tipo: ${result.content_type || 'N/A'}</span>
+                                <span>Punteggio: ${Math.round(result.search_score || 0)}</span>
+                            </div>
+                            <div class="tags">
+                                ${keywords.map(k => `<span class="tag">${k}</span>`).join('')}
+                                ${topics.map(t => `<span class="tag">${t}</span>`).join('')}
+                            </div>
+                        </div>
+                    `;
+                });
+            }
+
+            resultsContent.innerHTML = html;
+            resultsSection.style.display = 'block';
+        }
+
+        // Load statistics
+        async function loadStats() {
+            try {
+                const response = await fetch('/stats');
+                if (!response.ok) return;
+                
+                const stats = await response.json();
+                
+                document.getElementById('totalPages').textContent = stats.total_pages || 0;
+                document.getElementById('contentTypes').textContent = Object.keys(stats.content_types || {}).length;
+                document.getElementById('languages').textContent = Object.keys(stats.languages || {}).length;
+                document.getElementById('keywords').textContent = Object.keys(stats.top_keywords || {}).length;
+                
+            } catch (error) {
+                console.error('Error loading stats:', error);
+            }
+        }
+
+        // Download results
+        async function downloadResults(format) {
+            if (!currentResults) {
+                showError('Nessun risultato da scaricare');
+                return;
+            }
+
+            try {
+                const response = await fetch(`/download/${format}`);
+                if (!response.ok) throw new Error('Errore nel download');
+                
+                const blob = await response.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `search_results.${format}`;
+                a.click();
+                window.URL.revokeObjectURL(url);
+                
+            } catch (error) {
+                showError('Errore durante il download: ' + error.message);
+            }
+        }
+
+        // Show error message
+        function showError(message) {
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'error';
+            errorDiv.textContent = message;
+            
+            const container = document.querySelector('.container');
+            container.insertBefore(errorDiv, container.firstChild);
+            
+            setTimeout(() => {
+                errorDiv.remove();
+            }, 5000);
+        }
+    </script>
+</body>
+</html>
